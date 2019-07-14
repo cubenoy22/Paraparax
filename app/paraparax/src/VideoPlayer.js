@@ -8,6 +8,7 @@ import VideoRenderer from './VideoRenderer';
 import Frame from './Frame';
 import VideoFrameList from './VideoFrameList';
 import Timeline from './Timeline';
+import ValueEditor from './ValueEditor';
 
 export default class VideoPlayer extends React.Component {
 
@@ -19,7 +20,8 @@ export default class VideoPlayer extends React.Component {
       timeline: null,
       startFrameIndex: 0,
       endFrameIndex: 0,
-      lastModified: new Date()
+      lastModified: new Date(),
+      isPlaying: false
     };
     this.fileRef = React.createRef();
     this.saveLinkRef = React.createRef();
@@ -27,7 +29,7 @@ export default class VideoPlayer extends React.Component {
   }
 
   render() {
-    const { frames, currentIndex, timeline, startFrameIndex, endFrameIndex, lastModified } = this.state;
+    const { isPlaying, frames, currentIndex, timeline, startFrameIndex, endFrameIndex, lastModified } = this.state;
     return (
       <>
         <KeyboardEventHandler
@@ -116,6 +118,7 @@ export default class VideoPlayer extends React.Component {
               overflow: 'scroll hidden'
             }}>
               <VideoFrameList
+                isPlaying={ isPlaying }
                 frames={ frames }
                 timeline={ timeline }
                 currentIndex={ currentIndex }
@@ -127,13 +130,13 @@ export default class VideoPlayer extends React.Component {
               />
             </div>
           </div>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '300px',
-            background: '#333a',
-            color: 'white'
-          }} />
+          <ValueEditor
+            isPlaying={ isPlaying }
+            frames={ frames }
+            timeline={ timeline }
+            currentIndex={ currentIndex }
+            onTimelineChange={ this.onTimelineChange.bind(this)}
+          />
         </div>
       </>
     );
@@ -224,6 +227,9 @@ export default class VideoPlayer extends React.Component {
   play() {
     if (!this.timer) {
       this.timer = window.setInterval(this.onNextFrame.bind(this), 1000 / 30);
+      this.setState({
+        isPlaying: true
+      });
     }
   }
 
@@ -231,6 +237,9 @@ export default class VideoPlayer extends React.Component {
     if (this.timer) {
       window.clearInterval(this.timer);
       this.timer = null;
+      this.setState({
+        isPlaying: false
+      });
     }
   }
 
@@ -273,5 +282,9 @@ export default class VideoPlayer extends React.Component {
       link.download = 'config.json';
       link.click();
     })();
+  }
+
+  onTimelineChange() {
+    this.setState({ lastModified: new Date() });
   }
 }

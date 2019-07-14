@@ -1,9 +1,10 @@
 export default class Timeline {
-  constructor(frames, json) {
+  constructor(frames, parsedJson) {
     this.frames = frames;
-    if (json) {
+    if (parsedJson) {
       let prevItem;
-      const items = json.positions.map(aData => {
+      // JSONからPositionItemのチェーンを作成
+      const items = parsedJson.positions.map(aData => {
         const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y);
         if (prevItem) {
           prevItem.nextItem = item;
@@ -12,20 +13,30 @@ export default class Timeline {
         return item;
       });
       this.firstPosition = items[0];
-      items.forEach(item => {
-        this.setPositionAt(item.index, item.x, item.y);
-      });
+      this.applyPositionsToFrames();
     } else {
       this.firstPosition = new PositionItem(0, frames);
     }
   }
 
+  applyPositionsToFrames() {
+    let item = this.firstPosition;
+    while (item) {
+      this.setPositionAt(item.index, item.x, item.y);
+      item = item.nextItem;
+    }
+  }
+
   hasPositionAt(index) {
+    return this.hasItemAt(index, this.firstPosition);
+  }
+
+  hasItemAt(index, firstItem) {
     if (index === 0) {
       return true;
     }
 
-    let pos = this.firstPosition.nextItem;
+    let pos = firstItem.nextItem;
     while (pos) {
       if (pos.index === index) {
         return true;
@@ -39,7 +50,14 @@ export default class Timeline {
   }
 
   getPositionFor(index) {
-    let pos = this.firstPosition;
+    return this.getItemFor(
+      index,
+      this.firstPosition,
+      (index, frames, pos, prevPos) => new PositionItem(index, frames, pos, prevPos));
+  }
+
+  getItemFor(index, firstItem, constructor) {
+    let pos = firstItem;
     if (index === 0) {
       return pos;
     }
@@ -52,13 +70,13 @@ export default class Timeline {
         prevPos = pos;
         pos = pos.nextItem;
       } else if (pos.index > index) {
-        const result = new PositionItem(index, this.frames, pos, prevPos);
+        const result = constructor(index, this.frames, pos, prevPos);
         prevPos.nextItem = result;
         pos.prevItem = result;
         return result;
       }
     }
-    const result = new PositionItem(index, this.frames, undefined, prevPos);
+    const result = constructor(index, this.frames, undefined, prevPos);
     prevPos.nextItem = result;
     return result;
   }
@@ -97,6 +115,29 @@ export default class Timeline {
         this.frames[i].posX = pos.x;
         this.frames[i].posY = pos.y;
       }
+    }
+  }
+
+  deletePositionAt(index) {
+    if (index > 0) {
+      let item = this.firstPosition.nextItem;
+      while (item) {
+        if (item.index === index) {
+          const nextItem = item.nextItem;
+          item.prevItem.nextItem = nextItem;
+          if (nextItem) {
+            nextItem.prevItem = item.prevItem;
+          }
+          this.applyPositionsToFrames();
+          return;
+        }
+        item = item.nextItem;
+      }
+    } else {
+      const item = this.firstPosition;
+      item.x = 0;
+      item.y = 0;
+      this.applyPositionsToFrames();
     }
   }
 
