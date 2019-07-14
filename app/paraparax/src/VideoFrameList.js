@@ -16,23 +16,24 @@ export default class VideoFrameList extends React.Component {
               left: startFrameIndex * 17,
               right: (frames.length - endFrameIndex) * 17
             }}
-          >
-          </div>
+          />
           <Draggable
             axis='x'
             grid={[17, 0]}
+            position={{x: startFrameIndex * 17, y: 0}}
             bounds={{top: 0, left: 0, right: (frames.length - 1) * 17, bottom: 0}}
             onDrag={ this.onRangeStartChange.bind(this) }
           >
-            <div className='VideoFrameListRangeSliderHandle'></div>
+            <div className='VideoFrameListRangeSliderHandle' />
           </Draggable>
           <Draggable
             axis='x'
             grid={[17, 0]}
+            position={{x: -(frames.length - endFrameIndex) * 17, y: 0}}
             bounds={{top: 0, left: -(frames.length - 1) * 17, right: 0, bottom: 0}}
             onDrag={ this.onRangeEndChange.bind(this) }
           >
-            <div className='VideoFrameListRangeSliderHandle'></div>
+            <div className='VideoFrameListRangeSliderHandle' />
           </Draggable>
         </div>
         <div className='VideoFrameListFrameContainer'>
@@ -47,9 +48,9 @@ export default class VideoFrameList extends React.Component {
               }
               <div className={classNames({
                 'is-selected': index === currentIndex
-              })}></div>
+              })} />
             </div>
-          ))}
+          )) }
         </div>
       </div>
     );

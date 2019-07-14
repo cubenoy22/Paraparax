@@ -56,24 +56,34 @@ export default class VideoPlayer extends React.Component {
             minWidth: '0'
           }}>
             <div style={{
+              width: '100%',
               height: '100%',
               overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'black'
+              display: 'grid',
+              gridTemplateRows: '18px calc(100% - 18px)',
+              gridTemplateColumns: '18px calc(100% - 18px)',
             }}>
-              <VideoRenderer
-                frames={ frames }
-                currentIndex={ currentIndex }
-                togglePlaying={ this.togglePlaying.bind(this) }
-                lastModified={ lastModified }
-              />
+              <div></div>
+              <div></div>
+              <div></div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'black'
+              }}>
+                <VideoRenderer
+                  frames={ frames }
+                  currentIndex={ currentIndex }
+                  togglePlaying={ this.togglePlaying.bind(this) }
+                  lastModified={ lastModified }
+                />
+              </div>
             </div>
             <div style={{
               height: '100px',
               background: '#333c',
-              overflow: 'scroll'
+              overflow: 'scroll hidden'
             }}>
               <VideoFrameList
                 frames={ frames }

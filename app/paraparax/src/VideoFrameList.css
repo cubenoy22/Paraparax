@@ -1,7 +1,6 @@
 .VideoFrameList {
   width: max-content;
   height: 100%;
-  overflow-x: scroll;
   display: flex;
   flex-direction: column;
 }
