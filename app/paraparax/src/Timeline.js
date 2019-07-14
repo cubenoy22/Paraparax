@@ -1,8 +1,23 @@
 export default class Timeline {
-  constructor(frames) {
+  constructor(frames, json) {
     this.frames = frames;
-    this.firstPosition = new PositionItem(0, frames.length - 1);
-    // this.firstFilter = null;
+    if (json) {
+      let prevItem;
+      const items = json.positions.map(aData => {
+        const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y);
+        if (prevItem) {
+          prevItem.nextItem = item;
+        }
+        prevItem = item;
+        return item;
+      });
+      this.firstPosition = items[0];
+      items.forEach(item => {
+        this.setPositionAt(item.index, item.x, item.y);
+      });
+    } else {
+      this.firstPosition = new PositionItem(0, frames);
+    }
   }
 
   hasPositionAt(index) {
@@ -84,6 +99,18 @@ export default class Timeline {
       }
     }
   }
+
+  toJSON() {
+    const positions = [];
+    let pos = this.firstPosition;
+    while (pos) {
+      positions.push(pos.toJSON());
+      pos = pos.nextItem;
+    }
+    return {
+      positions
+    };
+  }
 }
 
 class TimelineItem {
@@ -109,5 +136,13 @@ class PositionItem extends TimelineItem {
     this.x = x;
     this.y = y;
   }
-}
 
+  toJSON() {
+    const { index, x, y } = this;
+    return {
+      index,
+      x,
+      y
+    };
+  }
+}

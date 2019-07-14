@@ -1,5 +1,6 @@
 import React from 'react';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
+import Dropzone from 'react-dropzone';
 
 import './VideoPlayer.css';
 import VideoRenderer from './VideoRenderer';
@@ -20,6 +21,7 @@ export default class VideoPlayer extends React.Component {
       lastModified: new Date()
     };
     this.fileRef = React.createRef();
+    this.saveLinkRef = React.createRef();
     this.timer = null;
   }
 
@@ -32,15 +34,19 @@ export default class VideoPlayer extends React.Component {
           onKeyEvent={ this.onKeyEvent.bind(this) }
         />
         <div className='App-Overlay'>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            background: '#333a'
-          }}>
-            <label htmlFor='fileSelector' style={{ background: 'gray' }}>
-              ファイルを選択…
-              <input type='file' id='fileSelector' accept='image/*' multiple ref={this.fileRef} onChange={this.onChange.bind(this)} style={{ display: 'none' }} />
-            </label>
+          <div>
+            <Dropzone onDrop={ this.onChange.bind(this) } multiple={true} noclick={true} >
+              {({getRootProps, getInputProps}) => (
+                <section>
+                  <div {...getRootProps()}>
+                    <input {...getInputProps()} />
+                    <p>ファイルを開く…</p>
+                  </div>
+                </section>
+              )}
+            </Dropzone>
+            <button onClick={ this.onSave.bind(this) }>保存</button>
+            <a href='/' ref={ this.saveLinkRef } style={{display: 'none'}}>Save</a>
           </div>
           <div style={{
             width: '100%',
@@ -65,7 +71,7 @@ export default class VideoPlayer extends React.Component {
               />
             </div>
             <div style={{
-              height: '300px',
+              height: '100px',
               background: '#333c',
               overflow: 'scroll'
             }}>
@@ -141,14 +147,30 @@ export default class VideoPlayer extends React.Component {
     e.preventDefault();
   }
 
-  async onChange(event) {
+  onChange(acceptedFiles) {
     this.pause();
-    const frames = Array.from(event.target.files).map(file => new Frame(file));
-    this.setState({
-      frames: frames,
-      timeline: new Timeline(frames),
-      endFrameIndex: event.target.files.length
-    });
+    const imageFiles = acceptedFiles.filter(f => f.type.startsWith('image/')).sort((a, b) => (a.name > b.name ? 1 : -1));
+    const configFile = acceptedFiles.find(f => f.type === 'application/json');
+    const frames = Array.from(imageFiles).map(file => new Frame(file));
+    if (configFile) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const json = JSON.parse(e.target.result);
+        this.setState({
+          frames: frames,
+          timeline: new Timeline(frames, json.timeline),
+          startFrameIndex: json.startFrameIndex,
+          endFrameIndex: json.endFrameIndex
+        });
+      };
+      reader.readAsText(configFile);
+    } else {
+      this.setState({
+        frames: frames,
+        timeline: new Timeline(frames),
+        endFrameIndex: imageFiles.length
+      });
+    }
   }
 
   togglePlaying() {
@@ -196,5 +218,20 @@ export default class VideoPlayer extends React.Component {
     this.setState({
       endFrameIndex: index
     })
+  }
+
+  onSave() {
+    const { timeline, startFrameIndex, endFrameIndex } = this.state;
+    const json = JSON.stringify({
+      timeline: timeline.toJSON(),
+      startFrameIndex,
+      endFrameIndex
+    });
+    (() => {
+      const link = this.saveLinkRef.current;
+      link.href = URL.createObjectURL(new Blob([json], {type: 'text/plain'}));
+      link.download = 'config.json';
+      link.click();
+    })();
   }
 }
