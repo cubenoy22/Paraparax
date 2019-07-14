@@ -3,6 +3,7 @@ import React from 'react';
 export default class ValueEditor extends React.Component {
 
   render() {
+    const { reverse, loop, loopBackAndForth, onLoopChange, onReverseChange } = this.props;
     return (
       <div style={{
         display: 'flex',
@@ -10,7 +11,34 @@ export default class ValueEditor extends React.Component {
         width: '300px'
       }}>
         <div>
+          <h3>プレーヤー</h3>
+          <label>
+            <input
+              type="checkbox"
+              checked={ loop }
+              onChange={ (e) => { onLoopChange(e.target.checked, undefined); } }
+            />繰り返す
+          </label>
+          <br />
+          <label>
+            <input
+              type="checkbox"
+              checked={ reverse }
+              disabled={ loopBackAndForth }
+              onChange={ (e) => { onReverseChange(e.target.checked); } }
+            />リバース
+          </label>
+          <br />
+          <label>
+            <input
+              type="checkbox"
+              checked={ loopBackAndForth }
+              onChange={ (e) => { onLoopChange(undefined, e.target.checked); } }
+            />再生／逆再生を繰り返す
+            </label>
           <h3>フレーム</h3>
+          <h4>再生</h4>
+          delay: <input type='text'></input>
           <h4>位置</h4>
           x: <input type='text' value={ this.getFrameX() } disabled></input><br />
           y: <input type='text' value={ this.getFrameY() } disabled></input>
@@ -21,9 +49,9 @@ export default class ValueEditor extends React.Component {
     );
   }
 
-  shouldComponentUpdate() {
-    return !this.props.isPlaying;
-  }
+  // shouldComponentUpdate() {
+  //   return !this.props.isPlaying;
+  // }
 
   canDeleteFramePosition() {
     const { currentIndex, timeline } = this.props;

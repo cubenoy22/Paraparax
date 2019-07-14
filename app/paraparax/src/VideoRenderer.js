@@ -53,7 +53,8 @@ export default class VideoRenderer extends React.Component {
     const { currentIndex } = this.props;
     const frame = this.frames[currentIndex];
     ctx.save();
-    ctx.filter = frame.filterText;
+    // ctx.clearRect(0, 0, this.state.canvasW, this.state.canvasH);
+    // ctx.filter = frame.filterText;
     ctx.drawImage(this.bitmaps[currentIndex], frame.posX, frame.posY);
     ctx.restore();
   }
@@ -65,6 +66,9 @@ export default class VideoRenderer extends React.Component {
         width={this.state.canvasW}
         height={this.state.canvasH}
         onClick={ this.props.togglePlaying }
+        style={{
+          border: '1px solid red'
+        }}
       />
     );
   }

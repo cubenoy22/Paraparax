@@ -21,15 +21,17 @@ export default class VideoPlayer extends React.Component {
       startFrameIndex: 0,
       endFrameIndex: 0,
       lastModified: new Date(),
-      isPlaying: false
+      isPlaying: false,
+      loop: true,
+      reverse: false,
+      loopBackAndForth: false,
     };
     this.fileRef = React.createRef();
     this.saveLinkRef = React.createRef();
-    this.timer = null;
   }
 
   render() {
-    const { isPlaying, frames, currentIndex, timeline, startFrameIndex, endFrameIndex, lastModified } = this.state;
+    const { isPlaying, frames, currentIndex, timeline, startFrameIndex, endFrameIndex, lastModified, reverse, loop, loopBackAndForth } = this.state;
     return (
       <>
         <KeyboardEventHandler
@@ -63,8 +65,8 @@ export default class VideoPlayer extends React.Component {
               height: '100%',
               overflow: 'hidden',
               display: 'grid',
-              gridTemplateRows: '18px calc(100% - 18px)',
-              gridTemplateColumns: '18px calc(100% - 18px)',
+              gridTemplateRows: '3px calc(100% - 3px)',
+              gridTemplateColumns: '3px calc(100% - 3px)',
             }}>
               <div></div>
               <div style={{
@@ -132,10 +134,15 @@ export default class VideoPlayer extends React.Component {
           </div>
           <ValueEditor
             isPlaying={ isPlaying }
+            reverse={ reverse }
+            loop={ loop }
+            loopBackAndForth={ loopBackAndForth }
             frames={ frames }
             timeline={ timeline }
             currentIndex={ currentIndex }
             onTimelineChange={ this.onTimelineChange.bind(this)}
+            onLoopChange={ this.onLoopChange.bind(this) }
+            onReverseChange={ this.onReverseChange.bind(this) }
           />
         </div>
       </>
@@ -198,12 +205,15 @@ export default class VideoPlayer extends React.Component {
     if (configFile) {
       const reader = new FileReader();
       reader.onload = e => {
-        const json = JSON.parse(e.target.result);
+        const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse } = JSON.parse(e.target.result);
         this.setState({
           frames: frames,
-          timeline: new Timeline(frames, json.timeline),
-          startFrameIndex: json.startFrameIndex,
-          endFrameIndex: json.endFrameIndex
+          timeline: new Timeline(frames, timeline),
+          startFrameIndex,
+          endFrameIndex,
+          loop,
+          loopBackAndForth,
+          reverse
         });
       };
       reader.readAsText(configFile);
@@ -217,7 +227,7 @@ export default class VideoPlayer extends React.Component {
   }
 
   togglePlaying() {
-    if (this.timer) {
+    if (this.state.isPlaying) {
       this.pause();
     } else {
       this.play();
@@ -225,18 +235,14 @@ export default class VideoPlayer extends React.Component {
   }
 
   play() {
-    if (!this.timer) {
-      this.timer = window.setInterval(this.onNextFrame.bind(this), 1000 / 30);
-      this.setState({
-        isPlaying: true
-      });
-    }
+    window.setTimeout(this.onNextFrame.bind(this), 1000 / 30);
+    this.setState({
+      isPlaying: true
+    });
   }
 
   pause() {
-    if (this.timer) {
-      window.clearInterval(this.timer);
-      this.timer = null;
+    if (this.state.isPlaying) {
       this.setState({
         isPlaying: false
       });
@@ -244,11 +250,45 @@ export default class VideoPlayer extends React.Component {
   }
 
   onNextFrame() {
-    const { currentIndex, startFrameIndex ,endFrameIndex } = this.state;
-    const nextIndex = currentIndex + 1;
-    this.setState({
-      currentIndex: nextIndex < endFrameIndex ? nextIndex : startFrameIndex
-    });
+    const { isPlaying, currentIndex, startFrameIndex, endFrameIndex, reverse, loop, loopBackAndForth } = this.state;
+    let nextIndex;
+    const diffState = {};
+    if (reverse) {
+      nextIndex = currentIndex - 1;
+      if (nextIndex < startFrameIndex) {
+        if (loopBackAndForth) {
+          nextIndex = startFrameIndex + 1;
+          diffState.reverse = !reverse;
+        } else {
+          if (loop) {
+            nextIndex = endFrameIndex - 1;
+          } else {
+            nextIndex = startFrameIndex;
+            diffState.isPlaying = false;
+          }
+        }
+      }
+    } else {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= endFrameIndex) {
+        if (loopBackAndForth) {
+          nextIndex = endFrameIndex - 1;
+          diffState.reverse = !reverse;
+        } else {
+          if (loop) {
+            nextIndex = startFrameIndex;
+          } else {
+            nextIndex = endFrameIndex - 1;
+            diffState.isPlaying = false;
+          }
+        }
+      }
+    }
+    diffState.currentIndex = nextIndex;
+    this.setState(diffState);
+    if (diffState.isPlaying || isPlaying) {
+      window.setTimeout(this.onNextFrame.bind(this), 1000 / 30);
+    }
   }
 
   onCurrentIndexChange(index) {
@@ -270,11 +310,14 @@ export default class VideoPlayer extends React.Component {
   }
 
   onSave() {
-    const { timeline, startFrameIndex, endFrameIndex } = this.state;
+    const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse } = this.state;
     const json = JSON.stringify({
       timeline: timeline.toJSON(),
       startFrameIndex,
-      endFrameIndex
+      endFrameIndex,
+      loop,
+      loopBackAndForth,
+      reverse
     });
     (() => {
       const link = this.saveLinkRef.current;
@@ -286,5 +329,25 @@ export default class VideoPlayer extends React.Component {
 
   onTimelineChange() {
     this.setState({ lastModified: new Date() });
+  }
+
+  onLoopChange(loop, loopBackAndForth) {
+    if (loop !== undefined) {
+      this.setState({
+        loop,
+        loopBackAndForth: false
+      });
+    } else if (loopBackAndForth !== undefined) {
+      this.setState({
+        loop: false,
+        loopBackAndForth
+      });
+    }
+  }
+
+  onReverseChange(reverse) {
+    this.setState({
+      reverse
+    });
   }
 }
