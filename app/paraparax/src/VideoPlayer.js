@@ -1,6 +1,7 @@
 import React from 'react';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 import Dropzone from 'react-dropzone';
+import Draggable from 'react-draggable';
 
 import './VideoPlayer.css';
 import VideoRenderer from './VideoRenderer';
@@ -64,8 +65,37 @@ export default class VideoPlayer extends React.Component {
               gridTemplateColumns: '18px calc(100% - 18px)',
             }}>
               <div></div>
-              <div></div>
-              <div></div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <Draggable
+                  axis='y'
+                >
+                  <div style={{
+                    width: '100%',
+                    height: '1px',
+                    background: 'green',
+                    cursor: 'row-resize'
+                  }}></div>
+                </Draggable>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <Draggable
+                    axis='x'
+                  >
+                    <div style={{
+                      width: '1px',
+                      height: '100%',
+                      background: 'green',
+                      cursor: 'col-resize'
+                    }}></div>
+                  </Draggable>
+              </div>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
