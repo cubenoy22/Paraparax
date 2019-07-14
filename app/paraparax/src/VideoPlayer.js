@@ -157,10 +157,11 @@ export default class VideoPlayer extends React.Component {
 
     const { currentIndex, frames, timeline } = this.state;
     const frame = frames[currentIndex];
+    const shift = e.ctrlKey ? 10 : 1;
     switch (e.keyCode) {
       case 37: // ArrowLeft
         if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX - 10, frame.posY);
+          timeline.setPositionAt(currentIndex, frame.posX - shift, frame.posY);
           this.setState({ lastModified: new Date() });
         } else {
           const nextIndex = currentIndex - 1;
@@ -171,13 +172,13 @@ export default class VideoPlayer extends React.Component {
         break;
       case 38: // ArrowUp
         if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX, frame.posY - 10);
+          timeline.setPositionAt(currentIndex, frame.posX, frame.posY - shift);
           this.setState({ lastModified: new Date() });
         }
         break;
       case 39: // ArrowRight
         if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX + 10, frame.posY);
+          timeline.setPositionAt(currentIndex, frame.posX + shift, frame.posY);
           this.setState({ lastModified: new Date() });
         } else {
           const nextIndex = currentIndex + 1;
@@ -188,7 +189,7 @@ export default class VideoPlayer extends React.Component {
         break;
       case 40: // ArrowDown
         if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX, frame.posY + 10);
+          timeline.setPositionAt(currentIndex, frame.posX, frame.posY + shift);
           this.setState({ lastModified: new Date() });
         }
         break;
@@ -218,10 +219,15 @@ export default class VideoPlayer extends React.Component {
       };
       reader.readAsText(configFile);
     } else {
+      frames[0].delay = 1000 / 30;
       this.setState({
         frames: frames,
         timeline: new Timeline(frames),
-        endFrameIndex: imageFiles.length
+        startFrameIndex: 0,
+        endFrameIndex: imageFiles.length,
+        loop: true,
+        loopBackAndForth: false,
+        reverse: false
       });
     }
   }
