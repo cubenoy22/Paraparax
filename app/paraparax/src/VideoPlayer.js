@@ -219,7 +219,6 @@ export default class VideoPlayer extends React.Component {
       };
       reader.readAsText(configFile);
     } else {
-      frames[0].delay = 1000 / 30;
       this.setState({
         frames: frames,
         timeline: new Timeline(frames),
@@ -241,7 +240,8 @@ export default class VideoPlayer extends React.Component {
   }
 
   play() {
-    window.setTimeout(this.onNextFrame.bind(this), 1000 / 30);
+    const { frames, currentIndex } = this.state;
+    window.setTimeout(this.onNextFrame.bind(this), frames[currentIndex].delay);
     this.setState({
       isPlaying: true
     });
@@ -256,7 +256,7 @@ export default class VideoPlayer extends React.Component {
   }
 
   onNextFrame() {
-    const { isPlaying, currentIndex, startFrameIndex, endFrameIndex, reverse, loop, loopBackAndForth } = this.state;
+    const { isPlaying, currentIndex, startFrameIndex, endFrameIndex, reverse, loop, loopBackAndForth, frames } = this.state;
     let nextIndex;
     const diffState = {};
     if (reverse) {
@@ -293,7 +293,7 @@ export default class VideoPlayer extends React.Component {
     diffState.currentIndex = nextIndex;
     this.setState(diffState);
     if (diffState.isPlaying || isPlaying) {
-      window.setTimeout(this.onNextFrame.bind(this), 1000 / 30);
+      window.setTimeout(this.onNextFrame.bind(this), frames[nextIndex].delay);
     }
   }
 

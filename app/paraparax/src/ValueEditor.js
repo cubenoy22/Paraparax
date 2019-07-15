@@ -35,10 +35,10 @@ export default class ValueEditor extends React.Component {
               checked={ loopBackAndForth }
               onChange={ (e) => { onLoopChange(undefined, e.target.checked); } }
             />再生／逆再生を繰り返す
-            </label>
+          </label>
           <h3>フレーム</h3>
           <h4>再生</h4>
-          delay: <input type='text'></input>
+          delay: <input type='text' value={ this.getFrameDelay() } onChange={ this.onDelayChange.bind(this) }></input>
           <h4>位置</h4>
           x: <input type='text' value={ this.getFrameX() } disabled></input><br />
           y: <input type='text' value={ this.getFrameY() } disabled></input>
@@ -65,6 +65,15 @@ export default class ValueEditor extends React.Component {
     return timeline.hasPositionAt(currentIndex);
   }
 
+  getFrameDelay() {
+    const { frames, currentIndex } = this.props;
+    const frame = frames[currentIndex];
+    if (!frame) {
+      return '';
+    }
+    return frame.delay;
+  }
+
   getFrameX() {
     const { frames, currentIndex, timeline } = this.props;
     const frame = frames[currentIndex];
@@ -88,6 +97,12 @@ export default class ValueEditor extends React.Component {
   deleteCurrentPosition() {
     const { currentIndex, timeline, onTimelineChange } = this.props;
     timeline.deletePositionAt(currentIndex);
+    onTimelineChange();
+  }
+
+  onDelayChange(e) {
+    const { currentIndex, timeline, onTimelineChange } = this.props;
+    timeline.setDelayAt(currentIndex, Number(e.target.value));
     onTimelineChange();
   }
 }

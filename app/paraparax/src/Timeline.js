@@ -2,34 +2,45 @@ export default class Timeline {
   constructor(frames, parsedJson) {
     this.frames = frames;
     if (parsedJson) {
+      const { positions, delays } = parsedJson;
       let prevItem;
-      // JSONからPositionItemのチェーンを作成
-      const items = parsedJson.positions.map(aData => {
-        const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y);
-        if (prevItem) {
-          prevItem.nextItem = item;
-        }
-        prevItem = item;
-        return item;
-      });
-      this.firstPosition = items[0];
-      this.applyPositionsToFrames();
-    } else {
+      if (positions) {
+        const positionItems = positions.map(aData => {
+          const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y);
+          if (prevItem) {
+            prevItem.nextItem = item;
+          }
+          prevItem = item;
+          return item;
+        });
+        this.firstPosition = positionItems[0];
+      }
+      if (delays) {
+        prevItem = undefined;
+        const delayItems = delays.map(aData => {
+          const item = new DelayItem(aData.index, frames, undefined, prevItem, aData.delay);
+          if (prevItem) {
+            prevItem.nextItem = item;
+          }
+          prevItem = item;
+          return item;
+        });
+        this.firstDelay = delayItems[0];
+      }
+    }
+
+    if (!this.firstPosition) {
       this.firstPosition = new PositionItem(0, frames);
     }
-  }
-
-  applyPositionsToFrames() {
-    let item = this.firstPosition;
-    while (item) {
-      this.setPositionAt(item.index, item.x, item.y);
-      item = item.nextItem;
+    if (!this.firstDelay) {
+      this.firstDelay = new DelayItem(0, frames, undefined, undefined, 1000 / 30);
     }
+
+    this.applyPositionsToFrames();
+    this.applyDelaysToFrames();
   }
 
-  hasPositionAt(index) {
-    return this.hasItemAt(index, this.firstPosition);
-  }
+  // Common
 
   hasItemAt(index, firstItem) {
     if (index === 0) {
@@ -49,36 +60,92 @@ export default class Timeline {
     return false;
   }
 
+  getItemFor(index, firstItem, constructor) {
+    let item = firstItem;
+    if (index === 0) {
+      return item;
+    }
+    let prevItem = item;
+    item = item.nextItem;
+    while (item) {
+      if (item.index === index) {
+        return item;
+      } else if (item.index < index) {
+        prevItem = item;
+        item = item.nextItem;
+      } else if (item.index > index) {
+        const result = constructor(index, this.frames, item, prevItem);
+        prevItem.nextItem = result;
+        item.prevItem = result;
+        return result;
+      }
+    }
+    const result = constructor(index, this.frames, undefined, prevItem);
+    prevItem.nextItem = result;
+    return result;
+  }
+
+  deleteItemAt(index, firstItem, applyToFrames) {
+    if (index > 0) {
+      let item = firstItem.nextItem;
+      while (item) {
+        if (item.index === index) {
+          const nextItem = item.nextItem;
+          item.prevItem.nextItem = nextItem;
+          if (nextItem) {
+            nextItem.prevItem = item.prevItem;
+          }
+          applyToFrames();
+          return;
+        }
+        item = item.nextItem;
+      }
+    } else {
+      const item = firstItem;
+      item.reset();
+      applyToFrames();
+    }
+  }
+
+  toJSON() {
+    const positions = [];
+    const delays = [];
+    let pos = this.firstPosition;
+    while (pos) {
+      positions.push(pos.toJSON());
+      pos = pos.nextItem;
+    }
+    let delay = this.firstDelay;
+    while (delay) {
+      delays.push(delay.toJSON());
+      delay = delay.nextItem;
+    }
+    return {
+      positions,
+      delays
+    };
+  }
+
+  // Position
+
+  applyPositionsToFrames() {
+    let item = this.firstPosition;
+    while (item) {
+      this.setPositionAt(item.index, item.x, item.y);
+      item = item.nextItem;
+    }
+  }
+
+  hasPositionAt(index) {
+    return this.hasItemAt(index, this.firstPosition);
+  }
+
   getPositionFor(index) {
     return this.getItemFor(
       index,
       this.firstPosition,
-      (index, frames, pos, prevPos) => new PositionItem(index, frames, pos, prevPos));
-  }
-
-  getItemFor(index, firstItem, constructor) {
-    let pos = firstItem;
-    if (index === 0) {
-      return pos;
-    }
-    let prevPos = pos;
-    pos = pos.nextItem;
-    while (pos) {
-      if (pos.index === index) {
-        return pos;
-      } else if (pos.index < index) {
-        prevPos = pos;
-        pos = pos.nextItem;
-      } else if (pos.index > index) {
-        const result = constructor(index, this.frames, pos, prevPos);
-        prevPos.nextItem = result;
-        pos.prevItem = result;
-        return result;
-      }
-    }
-    const result = constructor(index, this.frames, undefined, prevPos);
-    prevPos.nextItem = result;
-    return result;
+      (index, frames, pos, prevPos) => new PositionItem(index, frames, pos, prevPos)
+    );
   }
 
   setPositionAt(index, x, y) {
@@ -119,38 +186,43 @@ export default class Timeline {
   }
 
   deletePositionAt(index) {
-    if (index > 0) {
-      let item = this.firstPosition.nextItem;
-      while (item) {
-        if (item.index === index) {
-          const nextItem = item.nextItem;
-          item.prevItem.nextItem = nextItem;
-          if (nextItem) {
-            nextItem.prevItem = item.prevItem;
-          }
-          this.applyPositionsToFrames();
-          return;
-        }
-        item = item.nextItem;
-      }
-    } else {
-      const item = this.firstPosition;
-      item.x = 0;
-      item.y = 0;
-      this.applyPositionsToFrames();
+    this.deleteItemAt(index, this.firstPosition, this.applyPositionsToFrames);
+  }
+
+  // Delay
+
+  applyDelaysToFrames() {
+    let item = this.firstDelay;
+    while (item) {
+      this.setDelayAt(item.index, item.delay);
+      item = item.nextItem;
     }
   }
 
-  toJSON() {
-    const positions = [];
-    let pos = this.firstPosition;
-    while (pos) {
-      positions.push(pos.toJSON());
-      pos = pos.nextItem;
+  hasDelayAt(index) {
+    return this.hasItemAt(index, this.firstDelay);
+  }
+
+  getDelayFor(index) {
+    return this.getItemFor(
+      index,
+      this.firstDelay,
+      (index, frames, pos, prevPos) => new DelayItem(index, frames, pos, prevPos)
+    );
+  }
+
+  setDelayAt(index, delay) {
+    const pos = this.getDelayFor(index);
+    pos.delay = delay;
+
+    const { endIndex } = pos;
+    for (let i = index; i <= endIndex; ++i) {
+      this.frames[i].delay = delay;
     }
-    return {
-      positions
-    };
+  }
+
+  deleteDelayAt(index) {
+    this.deleteItemAt(index, this.firstDelay, this.applyDelaysToFrames);
   }
 }
 
@@ -178,12 +250,35 @@ class PositionItem extends TimelineItem {
     this.y = y;
   }
 
+  reset() {
+    this.x = this.y = 0;
+  }
+
   toJSON() {
     const { index, x, y } = this;
     return {
       index,
       x,
       y
+    };
+  }
+}
+
+class DelayItem extends TimelineItem {
+  constructor(index, frames, nextItem, prevItem, delay) {
+    super(index, frames, nextItem, prevItem);
+    this.delay = delay;
+  }
+
+  reset() {
+    this.delay = 1000 / 30;
+  }
+
+  toJSON() {
+    const { index, delay } = this;
+    return {
+      index,
+      delay
     };
   }
 }
