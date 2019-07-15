@@ -299,7 +299,7 @@ export default class Timeline {
         const tempParams = new FilterParams();
         for (let key of Object.keys(params)) {
           const endValue = pos.nextItem.params[key];
-          const diff = (endValue - pos.params[key]) / (endIndex - index);
+          const diff = (endValue - pos.params[key]) / (endIndex > index ? endIndex - index : 1);
           tempParams[key] = pos.params[key] + diff * (i - index);
         }
         this.frames[i].filter = tempParams;

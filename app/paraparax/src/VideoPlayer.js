@@ -35,7 +35,12 @@ export default class VideoPlayer extends React.Component {
     return (
       <>
         <KeyboardEventHandler
-          handleKeys={['space', 'left', 'up', 'right', 'down', 'shift']}
+          handleKeys={[
+            'space',
+            'left', 'right',
+            'shift+left', 'shift+up', 'shift+right', 'shift+down',
+            'shift+alt+left', 'shift+alt+up', 'shift+alt+right', 'shift+alt+down',
+          ]}
           onKeyEvent={ this.onKeyEvent.bind(this) }
         />
         <div className='App-Overlay'>
@@ -150,49 +155,60 @@ export default class VideoPlayer extends React.Component {
   }
 
   onKeyEvent(key, e) {
-    if (e.keyCode === 32) {
+    if (key === 'space') {
       this.togglePlaying();
       return;
     }
 
     const { currentIndex, frames, timeline } = this.state;
     const frame = frames[currentIndex];
-    const shift = e.ctrlKey ? 10 : 1;
-    switch (e.keyCode) {
-      case 37: // ArrowLeft
-        if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX - shift, frame.posY);
-          this.setState({ lastModified: new Date() });
-        } else {
+    switch (key) {
+      case 'left': (() => {
           const nextIndex = currentIndex - 1;
           this.setState({
             currentIndex: nextIndex >= 0 ? nextIndex : frames.length - 1
           });
-        }
+        })();
         break;
-      case 38: // ArrowUp
-        if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX, frame.posY - shift);
-          this.setState({ lastModified: new Date() });
-        }
-        break;
-      case 39: // ArrowRight
-        if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX + shift, frame.posY);
-          this.setState({ lastModified: new Date() });
-        } else {
+      case 'right': (() => {
           const nextIndex = currentIndex + 1;
           this.setState({
             currentIndex: nextIndex < frames.length ? nextIndex : 0
           });
-        }
+        })();
         break;
-      case 40: // ArrowDown
-        if (e.shiftKey) {
-          timeline.setPositionAt(currentIndex, frame.posX, frame.posY + shift);
+      case 'shift+left':
+        timeline.setPositionAt(currentIndex, frame.posX - 1, frame.posY);
+        this.setState({ lastModified: new Date() });
+        break;
+      case 'shift+up':
+        timeline.setPositionAt(currentIndex, frame.posX, frame.posY - 1);
+        this.setState({ lastModified: new Date() });
+        break;
+      case 'shift+right':
+        timeline.setPositionAt(currentIndex, frame.posX + 1, frame.posY);
+        this.setState({ lastModified: new Date() });
+        break;
+      case 'shift+down':
+        timeline.setPositionAt(currentIndex, frame.posX, frame.posY + 1);
+        this.setState({ lastModified: new Date() });
+        break;
+      case 'shift+alt+left':
+          timeline.setPositionAt(currentIndex, frame.posX - 10, frame.posY);
           this.setState({ lastModified: new Date() });
-        }
-        break;
+          break;
+        case 'shift+alt+up':
+          timeline.setPositionAt(currentIndex, frame.posX, frame.posY - 10);
+          this.setState({ lastModified: new Date() });
+          break;
+        case 'shift+alt+right':
+          timeline.setPositionAt(currentIndex, frame.posX + 10, frame.posY);
+          this.setState({ lastModified: new Date() });
+          break;
+        case 'shift+alt+down':
+          timeline.setPositionAt(currentIndex, frame.posX, frame.posY + 10);
+          this.setState({ lastModified: new Date() });
+          break;
       default:
       }
     e.preventDefault();
