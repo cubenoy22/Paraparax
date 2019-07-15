@@ -43,15 +43,13 @@ export default class VideoFrameList extends React.Component {
               className='VideoFrameListFrame'
               onClick={ () => {onCurrentIndexChange(index)} }
             >
-              {
-                (timeline.hasPositionAt(index)) ? (<div>p</div>) : null
-              }
-              {
-                (timeline.hasDelayAt(index)) ? (<div>d</div>) : null
-              }
               <div className={classNames({
                 'is-selected': index === currentIndex
               })} />
+              <div className='attributes'>
+                { (timeline.hasPositionAt(index)) ? (<div>p</div>) : <div>&nbsp;</div> }
+                { (timeline.hasDelayAt(index)) ? (<div>d</div>) : <div>&nbsp;</div> }
+              </div>
             </div>
           )) }
         </div>

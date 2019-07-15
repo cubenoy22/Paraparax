@@ -39,6 +39,12 @@
   border-left: 1px solid #ccc;
   cursor: pointer;
   position: relative;
+  font-size: 12px;
+  color: white;
+}
+
+.VideoFrameListFrame .attributes {
+  position: absolute;
 }
 
 .VideoFrameListFrame .is-selected {
