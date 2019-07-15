@@ -1,8 +1,10 @@
+import FilterParams from "./FilterParams";
+
 export default class Timeline {
   constructor(frames, parsedJson) {
     this.frames = frames;
     if (parsedJson) {
-      const { positions, delays } = parsedJson;
+      const { positions, delays, filters } = parsedJson;
       let prevItem;
       if (positions) {
         const positionItems = positions.map(aData => {
@@ -27,6 +29,18 @@ export default class Timeline {
         });
         this.firstDelay = delayItems[0];
       }
+      if (filters) {
+        prevItem = undefined;
+        const filterItems = filters.map(aData => {
+          const item = new FilterItem(aData.index, frames, undefined, prevItem, Object.assign(new FilterParams(), aData.params));
+          if (prevItem) {
+            prevItem.nextItem = item;
+          }
+          prevItem = item;
+          return item;
+        });
+        this.firstFilter = filterItems[0];
+      }
     }
 
     if (!this.firstPosition) {
@@ -35,9 +49,13 @@ export default class Timeline {
     if (!this.firstDelay) {
       this.firstDelay = new DelayItem(0, frames, undefined, undefined, 1000 / 30);
     }
+    if (!this.firstFilter) {
+      this.firstFilter = new FilterItem(0, frames);
+    }
 
     this.applyPositionsToFrames();
     this.applyDelaysToFrames();
+    this.applyFiltersToFrames();
   }
 
   // Common
@@ -110,6 +128,7 @@ export default class Timeline {
   toJSON() {
     const positions = [];
     const delays = [];
+    const filters = [];
     let pos = this.firstPosition;
     while (pos) {
       positions.push(pos.toJSON());
@@ -120,9 +139,15 @@ export default class Timeline {
       delays.push(delay.toJSON());
       delay = delay.nextItem;
     }
+    let filter = this.firstFilter;
+    while (filter) {
+      filters.push(filter.toJSON());
+      filter = filter.nextItem;
+    }
     return {
       positions,
-      delays
+      delays,
+      filters
     };
   }
 
@@ -153,12 +178,12 @@ export default class Timeline {
     pos.x = x;
     pos.y = y;
 
-    if (index > 0) {
+    if (pos.prevItem) {
       const startX = pos.prevItem.x;
       const startY = pos.prevItem.y;
       const { startIndex } = pos;
-      const diffX = (pos.x - startX) / (index - startIndex);
-      const diffY = (pos.y - startY) / (index - startIndex);
+      const diffX = (x - startX) / (index - startIndex);
+      const diffY = (y - startY) / (index - startIndex);
       for (let i = startIndex; i <= index; ++i) {
         this.frames[i].posX = startX + diffX * (i - startIndex);
         this.frames[i].posY = startY + diffY * (i - startIndex);
@@ -171,8 +196,8 @@ export default class Timeline {
       const endX = pos.nextItem.x;
       const endY = pos.nextItem.y;
       const { endIndex } = pos;
-      const diffX = (endX - pos.x) / (endIndex - index);
-      const diffY = (endY - pos.y) / (endIndex - index);
+      const diffX = (endX - pos.x) / (endIndex > index ? endIndex - index : 1);
+      const diffY = (endY - pos.y) / (endIndex > index ? endIndex - index : 1);
       for (let i = index; i <= endIndex; ++i) {
         this.frames[i].posX = pos.x + diffX * (i - index);
         this.frames[i].posY = pos.y + diffY * (i - index);
@@ -186,7 +211,7 @@ export default class Timeline {
   }
 
   deletePositionAt(index) {
-    this.deleteItemAt(index, this.firstPosition, this.applyPositionsToFrames);
+    this.deleteItemAt(index, this.firstPosition, this.applyPositionsToFrames.bind(this));
   }
 
   // Delay
@@ -222,8 +247,76 @@ export default class Timeline {
   }
 
   deleteDelayAt(index) {
-    this.deleteItemAt(index, this.firstDelay, this.applyDelaysToFrames);
+    this.deleteItemAt(index, this.firstDelay, this.applyDelaysToFrames.bind(this));
   }
+
+  // Filter
+
+  applyFiltersToFrames() {
+    let item = this.firstFilter;
+    while (item) {
+      this.setFilterAt(item.index, item.params);
+      item = item.nextItem;
+    }
+  }
+
+  hasFilterAt(index) {
+    return this.hasItemAt(index, this.firstFilter);
+  }
+
+  getFilterFor(index) {
+    return this.getItemFor(
+      index,
+      this.firstFilter,
+      (index, frames, pos, prevPos) => new FilterItem(index, frames, pos, prevPos)
+    );
+  }
+
+  setFilterAt(index, params) {
+    const pos = this.getFilterFor(index);
+    pos.params = params;
+
+    if (pos.prevItem) {
+      const { startIndex } = pos;
+      const prevParams = pos.prevItem.params;
+      for (let i = index; i >= startIndex; --i) {
+        const tempParams = new FilterParams();
+        for (let key of Object.keys(params)) {
+          const startValue = prevParams[key];
+          const diff = (params[key] - startValue) / (index - startIndex);
+          tempParams[key] = startValue + diff * (i - startIndex);
+        }
+        this.frames[i].filter = tempParams;
+        this.frames[i].filterText = tempParams.toFilterText();
+      }
+    } else {
+      this.frames[index].filter = Object.assign(new FilterParams(), params);
+      this.frames[index].filterText = params.toFilterText();
+    }
+    if (pos.nextItem) {
+      const { endIndex } = pos;
+      for (let i = endIndex; i >= index; --i) {
+        const tempParams = new FilterParams();
+        for (let key of Object.keys(params)) {
+          const endValue = pos.nextItem.params[key];
+          const diff = (endValue - pos.params[key]) / (endIndex - index);
+          tempParams[key] = pos.params[key] + diff * (i - index);
+        }
+        this.frames[i].filter = tempParams;
+        this.frames[i].filterText = tempParams.toFilterText();
+      }
+    } else {
+      for (let i = index; i <= pos.endIndex; ++i) {
+        this.frames[i].filter = Object.assign(new FilterParams(), params);
+        this.frames[i].filterText = params.toFilterText();
+      }
+    }
+  }
+
+  deleteFilterAt(index) {
+    this.deleteItemAt(index, this.firstFilter, this.applyFiltersToFrames.bind(this));
+  }
+
 }
 
 class TimelineItem {
@@ -279,6 +372,25 @@ class DelayItem extends TimelineItem {
     return {
       index,
       delay
+    };
+  }
+}
+
+class FilterItem extends TimelineItem {
+  constructor(index, frames, nextItem, prevItem, params = new FilterParams()) {
+    super(index, frames, nextItem, prevItem);
+    this.params = params;
+  }
+
+  reset() {
+    this.params = new FilterParams();
+  }
+
+  toJSON() {
+    const { index, params } = this;
+    return {
+      index,
+      params
     };
   }
 }

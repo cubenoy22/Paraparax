@@ -8,7 +8,8 @@ export default class ValueEditor extends React.Component {
       <div style={{
         display: 'flex',
         flexDirection: 'column',
-        width: '300px'
+        width: '300px',
+        overflowY: 'scroll'
       }}>
         <div>
           <h3>プレーヤー</h3>
@@ -44,6 +45,17 @@ export default class ValueEditor extends React.Component {
           y: <input type='text' value={ this.getFrameY() } disabled></input>
           <button disabled={ !this.canDeleteFramePosition() } onClick={ this.deleteCurrentPosition.bind(this) }>削除</button>
           <h4>フィルター</h4>
+          <label><input type='range' min='0' max='100' value={ this.getFilterValue('blur') } onChange={ e => { this.onFilterChange('blur', e); } } />Blur</label>
+          <label><input type='range' min='0' max='800' value={ this.getFilterValue('brightness') } onChange={ e => { this.onFilterChange('brightness', e); } } />Brightness</label>
+          <label><input type='range' min='0' max='800' value={ this.getFilterValue('contrast') } onChange={ e => { this.onFilterChange('contrast', e); } } />Contrast</label>
+          <label><input type='range' min='0' max='100' value={ this.getFilterValue('grayscale') } onChange={ e => { this.onFilterChange('grayscale', e); } } />Grayscale</label>
+          <label><input type='range' min='0' max='360' value={ this.getFilterValue('hueRotate') } onChange={ e => { this.onFilterChange('hueRotate', e); } } />HueRotate</label>
+          <label><input type='range' min='0' max='100' value={ this.getFilterValue('invert') } onChange={ e => { this.onFilterChange('invert', e); } } />Invert</label>
+          <label><input type='range' min='0' max='100' value={ this.getFilterValue('opacity') } onChange={ e => { this.onFilterChange('opacity', e); } } />Opacity</label>
+          <label><input type='range' min='0' max='400' value={ this.getFilterValue('saturate') } onChange={ e => { this.onFilterChange('saturate', e); } } />Saturate</label>
+          <label><input type='range' min='0' max='100' value={ this.getFilterValue('sepia') } onChange={ e => { this.onFilterChange('sepia', e); } } />Sepia</label>
+          <br />
+          <button disabled={ !this.canDeleteFilter() } onClick={ this.deleteCurrentFilter.bind(this) }>削除</button>
         </div>
       </div>
     );
@@ -55,14 +67,18 @@ export default class ValueEditor extends React.Component {
 
   canDeleteFramePosition() {
     const { currentIndex, timeline } = this.props;
-    if (currentIndex < 1) {
-      return false;
-    }
-
-    if (!timeline) {
+    if (currentIndex < 1 || !timeline) {
       return false;
     }
     return timeline.hasPositionAt(currentIndex);
+  }
+
+  canDeleteFilter() {
+    const { currentIndex, timeline } = this.props;
+    if (currentIndex < 1 || !timeline) {
+      return false;
+    }
+    return timeline.hasFilterAt(currentIndex);
   }
 
   getFrameDelay() {
@@ -94,6 +110,15 @@ export default class ValueEditor extends React.Component {
     return `${frame.posY}${hasPosition ? '' : ' (補完)'}`;
   }
 
+  getFilterValue(key) {
+    const { frames, currentIndex } = this.props;
+    const frame = frames[currentIndex];
+    if (!frame) {
+      return 0;
+    }
+    return frame.filter[key];
+  }
+
   deleteCurrentPosition() {
     const { currentIndex, timeline, onTimelineChange } = this.props;
     timeline.deletePositionAt(currentIndex);
@@ -103,6 +128,20 @@ export default class ValueEditor extends React.Component {
   onDelayChange(e) {
     const { currentIndex, timeline, onTimelineChange } = this.props;
     timeline.setDelayAt(currentIndex, Number(e.target.value));
+    onTimelineChange();
+  }
+
+  deleteCurrentFilter() {
+    const { currentIndex, timeline, onTimelineChange } = this.props;
+    timeline.deleteFilterAt(currentIndex);
+    onTimelineChange();
+  }
+
+  onFilterChange(filterName, e) {
+    const { currentIndex, frames, timeline, onTimelineChange } = this.props;
+    const filter = frames[currentIndex].filter;
+    filter[filterName] = Number(e.target.value);
+    timeline.setFilterAt(currentIndex, filter);
     onTimelineChange();
   }
 }

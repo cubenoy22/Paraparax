@@ -49,6 +49,7 @@ export default class VideoFrameList extends React.Component {
               <div className='attributes'>
                 { (timeline.hasPositionAt(index)) ? (<div>p</div>) : <div>&nbsp;</div> }
                 { (timeline.hasDelayAt(index)) ? (<div>d</div>) : <div>&nbsp;</div> }
+                { (timeline.hasFilterAt(index)) ? (<div>f</div>) : <div>&nbsp;</div> }
               </div>
             </div>
           )) }

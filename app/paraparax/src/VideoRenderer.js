@@ -54,7 +54,7 @@ export default class VideoRenderer extends React.Component {
     const frame = this.frames[currentIndex];
     ctx.save();
     // ctx.clearRect(0, 0, this.state.canvasW, this.state.canvasH);
-    // ctx.filter = frame.filterText;
+    ctx.filter = frame.filterText;
     ctx.drawImage(this.bitmaps[currentIndex], frame.posX, frame.posY);
     ctx.restore();
   }
