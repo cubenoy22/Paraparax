@@ -8,8 +8,7 @@
     "react-dom": "^16.8.6",
     "react-draggable": "^3.3.0",
     "react-dropzone": "^10.1.5",
-    "react-keydown": "^1.9.10",
-    "react-scripts": "3.0.1"
+    "react-keydown": "^1.9.10"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -31,5 +30,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "react-scripts": "^3.2.0"
   }
 }
