@@ -25,9 +25,11 @@ export default class VideoPlayer extends React.Component {
       loop: true,
       reverse: false,
       loopBackAndForth: false,
+      hasRecordedVideo: false
     };
-    this.fileRef = React.createRef();
+    this.rendererRef = React.createRef();
     this.saveLinkRef = React.createRef();
+    this.saveVideoLinkRef = React.createRef();
   }
 
   render() {
@@ -56,7 +58,11 @@ export default class VideoPlayer extends React.Component {
               )}
             </Dropzone>
             <button onClick={ this.onSave.bind(this) }>保存</button>
+            <button onClick={ this.onRecord.bind(this) }>{this.mediaRecorder ? '録画停止' : '録画開始'}</button>
             <a href='/' ref={ this.saveLinkRef } style={{display: 'none'}}>Save</a>
+            <a href='/' ref={ this.saveVideoLinkRef } style={{
+              visibility: this.state.hasRecordedVideo ? 'visible' : 'hidden'
+            }}>Save Video</a>
           </div>
           <div style={{
             width: '100%',
@@ -112,6 +118,7 @@ export default class VideoPlayer extends React.Component {
                 background: 'black'
               }}>
                 <VideoRenderer
+                  ref={ this.rendererRef }
                   frames={ frames }
                   currentIndex={ currentIndex }
                   togglePlaying={ this.togglePlaying.bind(this) }
@@ -347,6 +354,35 @@ export default class VideoPlayer extends React.Component {
       link.download = 'config.json';
       link.click();
     })();
+  }
+
+  onRecord() {
+    if (this.videoChunks && this.mediaRecorder) {
+      this.mediaRecorder.stop();
+      this.mediaRecorder.onstop = (e) => {
+        const link = this.saveVideoLinkRef.current;
+        link.href = URL.createObjectURL(new Blob(this.videoChunks), { type: 'video/webm' });
+        link.download = 'video.webm';
+        this.videoChunks = null;
+        this.mediaRecorder = null;
+        this.setState({
+          hasRecordedVideo: true
+        });
+      };
+      return;
+    }
+
+    const stream = this.rendererRef.current.captureStream();
+    this.mediaRecorder = new MediaRecorder(stream);
+    this.mediaRecorder.ondataavailable = (e) => {
+      this.videoChunks.push(e.data);
+    };
+    this.videoChunks = [];
+    this.videoSaveURL = null;
+    this.mediaRecorder.start();
+    this.setState({
+      hasRecordedVideo: false
+    });
   }
 
   onTimelineChange() {

@@ -59,6 +59,10 @@ export default class VideoRenderer extends React.Component {
     ctx.restore();
   }
 
+  captureStream() {
+    return this.canvasRef.current.captureStream();
+  }
+
   render() {
     return (
       <canvas
