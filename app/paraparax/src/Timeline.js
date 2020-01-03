@@ -192,8 +192,8 @@ export default class Timeline {
       this.frames[0].posX = x;
       this.frames[0].posY = y;
     }
-    const { endIndex } = pos;
-    if (pos.nextItem && index < endIndex) {
+    if (pos.nextItem) {
+      const endIndex = pos.nextItem.index;
       const endX = pos.nextItem.x;
       const endY = pos.nextItem.y;
       const diffX = (endX - pos.x) / (endIndex - index);
