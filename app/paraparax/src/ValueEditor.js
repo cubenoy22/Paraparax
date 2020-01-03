@@ -1,9 +1,23 @@
 import React from 'react';
 
 export default class ValueEditor extends React.Component {
+  constructor() {
+    super();
+    this.raX = React.createRef();
+    this.raY = React.createRef();
+    this.raW = React.createRef();
+    this.raH = React.createRef();
+  }
 
   render() {
-    const { reverse, loop, loopBackAndForth, onLoopChange, onReverseChange } = this.props;
+    const {
+      reverse,
+      loop,
+      loopBackAndForth,
+      onLoopChange,
+      onReverseChange,
+      renderingArea: ra
+    } = this.props;
     return (
       <div style={{
         display: 'flex',
@@ -37,6 +51,11 @@ export default class ValueEditor extends React.Component {
               onChange={ (e) => { onLoopChange(undefined, e.target.checked); } }
             />Loop Back and Forth
           </label>
+          <h4>Rendering Area</h4>
+          X: <input type='text' ref={ this.raX } value={ ra.x } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
+          Y: <input type='text' ref={ this.raY } value={ ra.y } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
+          W: <input type='text' ref={ this.raW } value={ ra.w } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
+          H: <input type='text' ref={ this.raH } value={ ra.h } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
           <h3>Frames</h3>
           <h4>Playing</h4>
           delay: <input type='text' value={ this.getFrameDelay() } onChange={ this.onDelayChange.bind(this) }></input>
@@ -156,5 +175,21 @@ export default class ValueEditor extends React.Component {
     filter[filterName] = Number(e.target.value);
     timeline.setFilterAt(currentIndex, filter);
     onTimelineChange();
+  }
+
+  onRenderingAreaChange(e) {
+    const { renderingArea, onRenderingAreaChange } = this.props;
+    const value = parseInt(e.target.value);
+    if (!isFinite(value)) {
+      return;
+    }
+    switch (e.target) {
+      case this.raX.current: renderingArea.x = value; break;
+      case this.raY.current: renderingArea.y = value; break;
+      case this.raW.current: renderingArea.w = value; break;
+      case this.raH.current: renderingArea.h = value; break;
+      default: return;
+    }
+    onRenderingAreaChange(renderingArea);
   }
 }

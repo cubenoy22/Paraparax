@@ -7,6 +7,8 @@ export default class VideoRenderer extends React.Component {
     this.state = {
       canvasW: 0,
       canvasH: 0,
+      cursorX: 0,
+      cursorY: 0,
     };
     this.bitmaps = [];
     this.frames = [];
@@ -27,6 +29,14 @@ export default class VideoRenderer extends React.Component {
       this.load(frames);
     }
     return null;
+  }
+
+  onMouseMove(e) {
+    const r = e.target.getBoundingClientRect();
+    this.setState({
+      cursorX: Math.floor(e.clientX - r.left),
+      cursorY: Math.floor(e.clientY - r.top)
+    });
   }
 
   async load(frames) {
@@ -50,11 +60,16 @@ export default class VideoRenderer extends React.Component {
 
   drawFrame() {
     const ctx = this.graphicsCtx;
-    const { currentIndex } = this.props;
+    const { currentIndex, renderingArea: ra } = this.props;
     const frame = this.frames[currentIndex];
     ctx.save();
-    // ctx.clearRect(0, 0, this.state.canvasW, this.state.canvasH);
+
+    const { canvasW, canvasH } = this.state;
+    ctx.clearRect(0, 0, canvasW, canvasH);
     ctx.filter = frame.filterText;
+    ctx.beginPath();
+    ctx.rect(ra.x, ra.y, ra.w || canvasW, ra.h || canvasH);
+    ctx.clip();
     ctx.drawImage(this.bitmaps[currentIndex], frame.posX, frame.posY);
     ctx.restore();
   }
@@ -65,15 +80,27 @@ export default class VideoRenderer extends React.Component {
 
   render() {
     return (
-      <canvas
-        ref={this.canvasRef}
-        width={this.state.canvasW}
-        height={this.state.canvasH}
-        onClick={ this.props.togglePlaying }
-        style={{
-          border: '1px solid red'
-        }}
-      />
+      <div style={{position: 'relative'}}>
+        <canvas
+          ref={this.canvasRef}
+          width={this.state.canvasW}
+          height={this.state.canvasH}
+          onMouseMove={this.onMouseMove.bind(this)}
+          onClick={ this.props.togglePlaying }
+          style={{
+            border: '1px solid red'
+          }}
+        />
+        <div style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: '0',
+          pointerEvents: 'none'
+        }}>
+          <p>{`${this.state.cursorX}, ${this.state.cursorY}`}</p>
+        </div>
+      </div>
     );
   }
 }

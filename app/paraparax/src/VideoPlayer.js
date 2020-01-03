@@ -25,7 +25,13 @@ export default class VideoPlayer extends React.Component {
       loop: true,
       reverse: false,
       loopBackAndForth: false,
-      hasRecordedVideo: false
+      hasRecordedVideo: false,
+      renderingArea: {
+        x: 0,
+        y: 0,
+        w: 0,
+        h: 0
+      }
     };
     this.rendererRef = React.createRef();
     this.saveLinkRef = React.createRef();
@@ -33,7 +39,19 @@ export default class VideoPlayer extends React.Component {
   }
 
   render() {
-    const { isPlaying, frames, currentIndex, timeline, startFrameIndex, endFrameIndex, lastModified, reverse, loop, loopBackAndForth } = this.state;
+    const {
+      isPlaying,
+      frames,
+      currentIndex,
+      timeline,
+      startFrameIndex,
+      endFrameIndex,
+      lastModified,
+      reverse,
+      loop,
+      loopBackAndForth,
+      renderingArea
+    } = this.state;
     return (
       <>
         <KeyboardEventHandler
@@ -123,6 +141,7 @@ export default class VideoPlayer extends React.Component {
                   currentIndex={ currentIndex }
                   togglePlaying={ this.togglePlaying.bind(this) }
                   lastModified={ lastModified }
+                  renderingArea={ renderingArea }
                 />
               </div>
             </div>
@@ -152,9 +171,11 @@ export default class VideoPlayer extends React.Component {
             frames={ frames }
             timeline={ timeline }
             currentIndex={ currentIndex }
+            renderingArea={ renderingArea }
             onTimelineChange={ this.onTimelineChange.bind(this)}
             onLoopChange={ this.onLoopChange.bind(this) }
             onReverseChange={ this.onReverseChange.bind(this) }
+            onRenderingAreaChange={ this.onRenderingAreaChange.bind(this) }
           />
         </div>
       </>
@@ -229,7 +250,7 @@ export default class VideoPlayer extends React.Component {
     if (configFile) {
       const reader = new FileReader();
       reader.onload = e => {
-        const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse } = JSON.parse(e.target.result);
+        const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse, renderingArea } = JSON.parse(e.target.result);
         this.setState({
           frames: frames,
           timeline: new Timeline(frames, timeline),
@@ -237,7 +258,8 @@ export default class VideoPlayer extends React.Component {
           endFrameIndex,
           loop,
           loopBackAndForth,
-          reverse
+          reverse,
+          renderingArea: renderingArea || { x: 0, y: 0, w: 0, h: 0 }
         });
       };
       reader.readAsText(configFile);
@@ -339,14 +361,15 @@ export default class VideoPlayer extends React.Component {
   }
 
   onSave() {
-    const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse } = this.state;
+    const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse, renderingArea } = this.state;
     const json = JSON.stringify({
       timeline: timeline.toJSON(),
       startFrameIndex,
       endFrameIndex,
       loop,
       loopBackAndForth,
-      reverse
+      reverse,
+      renderingArea
     });
     (() => {
       const link = this.saveLinkRef.current;
@@ -406,6 +429,12 @@ export default class VideoPlayer extends React.Component {
   onReverseChange(reverse) {
     this.setState({
       reverse
+    });
+  }
+
+  onRenderingAreaChange(renderingArea) {
+    this.setState({
+      renderingArea
     });
   }
 }
