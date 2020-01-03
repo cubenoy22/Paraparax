@@ -40,6 +40,7 @@ export default class ValueEditor extends React.Component {
           <h3>フレーム</h3>
           <h4>再生</h4>
           delay: <input type='text' value={ this.getFrameDelay() } onChange={ this.onDelayChange.bind(this) }></input>
+          <button disabled={ !this.canDeleteFrameDelay() } onClick={ this.deleteCurrentDelay.bind(this) }>削除</button>
           <h4>位置</h4>
           x: <input type='text' value={ this.getFrameX() } disabled></input><br />
           y: <input type='text' value={ this.getFrameY() } disabled></input>
@@ -71,6 +72,14 @@ export default class ValueEditor extends React.Component {
       return false;
     }
     return timeline.hasPositionAt(currentIndex);
+  }
+
+  canDeleteFrameDelay() {
+    const { currentIndex, timeline } = this.props;
+    if (currentIndex < 1 || !timeline) {
+      return false;
+    }
+    return timeline.hasDelayAt(currentIndex);
   }
 
   canDeleteFilter() {
@@ -122,6 +131,12 @@ export default class ValueEditor extends React.Component {
   deleteCurrentPosition() {
     const { currentIndex, timeline, onTimelineChange } = this.props;
     timeline.deletePositionAt(currentIndex);
+    onTimelineChange();
+  }
+
+  deleteCurrentDelay() {
+    const { currentIndex, timeline, onTimelineChange } = this.props;
+    timeline.deleteDelayAt(currentIndex);
     onTimelineChange();
   }
 
