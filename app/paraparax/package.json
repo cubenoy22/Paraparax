@@ -8,6 +8,7 @@
     "react-dom": "^16.8.6",
     "react-draggable": "^3.3.0",
     "react-dropzone": "^10.1.5",
+    "react-keyboard-event-handler": "^1.5.2",
     "react-keydown": "^1.9.10"
   },
   "scripts": {
