@@ -16,7 +16,9 @@ export default class ValueEditor extends React.Component {
       loopBackAndForth,
       onLoopChange,
       onReverseChange,
-      renderingArea: ra
+      onClipToBoundsChange,
+      renderingArea: ra,
+      clipToBounds
     } = this.props;
     return (
       <div style={{
@@ -56,6 +58,13 @@ export default class ValueEditor extends React.Component {
           Y: <input type='text' ref={ this.raY } value={ ra.y } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
           W: <input type='text' ref={ this.raW } value={ ra.w } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
           H: <input type='text' ref={ this.raH } value={ ra.h } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
+          <label>
+            <input
+              type="checkbox"
+              checked={ clipToBounds }
+              onChange={ (e) => { onClipToBoundsChange(e.target.checked); } }
+            />Clip to Bounds
+          </label>
           <h3>Frames</h3>
           <h4>Playing</h4>
           delay: <input type='text' value={ this.getFrameDelay() } onChange={ this.onDelayChange.bind(this) }></input>

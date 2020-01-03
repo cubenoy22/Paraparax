@@ -31,7 +31,8 @@ export default class VideoPlayer extends React.Component {
         y: 0,
         w: 0,
         h: 0
-      }
+      },
+      clipToBounds: false
     };
     this.rendererRef = React.createRef();
     this.saveLinkRef = React.createRef();
@@ -50,7 +51,8 @@ export default class VideoPlayer extends React.Component {
       reverse,
       loop,
       loopBackAndForth,
-      renderingArea
+      renderingArea,
+      clipToBounds
     } = this.state;
     return (
       <>
@@ -109,7 +111,8 @@ export default class VideoPlayer extends React.Component {
                     width: '100%',
                     height: '1px',
                     background: 'green',
-                    cursor: 'row-resize'
+                    cursor: 'row-resize',
+                    zIndex: 9999
                   }}></div>
                 </Draggable>
               </div>
@@ -125,7 +128,8 @@ export default class VideoPlayer extends React.Component {
                       width: '1px',
                       height: '100%',
                       background: 'green',
-                      cursor: 'col-resize'
+                      cursor: 'col-resize',
+                      zIndex: 9999
                     }}></div>
                   </Draggable>
               </div>
@@ -142,6 +146,7 @@ export default class VideoPlayer extends React.Component {
                   togglePlaying={ this.togglePlaying.bind(this) }
                   lastModified={ lastModified }
                   renderingArea={ renderingArea }
+                  clipToBounds={ clipToBounds }
                 />
               </div>
             </div>
@@ -172,10 +177,12 @@ export default class VideoPlayer extends React.Component {
             timeline={ timeline }
             currentIndex={ currentIndex }
             renderingArea={ renderingArea }
+            clipToBounds={ clipToBounds }
             onTimelineChange={ this.onTimelineChange.bind(this)}
             onLoopChange={ this.onLoopChange.bind(this) }
             onReverseChange={ this.onReverseChange.bind(this) }
             onRenderingAreaChange={ this.onRenderingAreaChange.bind(this) }
+            onClipToBoundsChange={ this.onClipToBoundsChange.bind(this) }
           />
         </div>
       </>
@@ -435,6 +442,12 @@ export default class VideoPlayer extends React.Component {
   onRenderingAreaChange(renderingArea) {
     this.setState({
       renderingArea
+    });
+  }
+
+  onClipToBoundsChange(clipToBounds) {
+    this.setState({
+      clipToBounds
     });
   }
 }
