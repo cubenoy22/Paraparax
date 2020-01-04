@@ -447,7 +447,8 @@ export default class VideoPlayer extends React.Component {
 
   onClipToBoundsChange(clipToBounds) {
     this.setState({
-      clipToBounds
+      clipToBounds,
+      lastModified: new Date()
     });
   }
 }

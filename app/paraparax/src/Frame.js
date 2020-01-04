@@ -5,6 +5,7 @@ export default class Frame {
     this.file = file;
     this.posX = 0;
     this.posY = 0;
+    this.angle = 0;
     this.delay = 0;
     this.filter = new FilterParams();
     this.filterText = this.filter.toFilterText();

@@ -72,6 +72,7 @@ export default class ValueEditor extends React.Component {
           <h4>Position</h4>
           X: <input type='text' value={ this.getFrameX() } disabled></input><br />
           Y: <input type='text' value={ this.getFrameY() } disabled></input><br />
+          Rotate: <input type='range' min='-360' max='360' value={ this.getFrameAngle() } onChange={ this.onAngleChange.bind(this) } />{ this.getFrameAngle() }
           <button disabled={ !this.canDeleteFramePosition() } onClick={ this.deleteCurrentPosition.bind(this) }>Delete</button>
           <h4>Filter</h4>
           <label><input type='range' min='0' max='100' value={ this.getFilterValue('blur') } onChange={ e => { this.onFilterChange('blur', e); } } />Blur</label>
@@ -145,6 +146,15 @@ export default class ValueEditor extends React.Component {
     return `${frame.posY}`;
   }
 
+  getFrameAngle() {
+    const { frames, currentIndex } = this.props;
+    const frame = frames[currentIndex];
+    if (!frame) {
+      return 0;
+    }
+    return frame.angle;
+  }
+
   getFilterValue(key) {
     const { frames, currentIndex } = this.props;
     const frame = frames[currentIndex];
@@ -163,6 +173,16 @@ export default class ValueEditor extends React.Component {
   deleteCurrentDelay() {
     const { currentIndex, timeline, onTimelineChange } = this.props;
     timeline.deleteDelayAt(currentIndex);
+    onTimelineChange();
+  }
+
+  onAngleChange(e) {
+    const { currentIndex, timeline, onTimelineChange } = this.props;
+    if (!timeline) {
+      return;
+    }
+    const pos = timeline.getPositionFor(currentIndex);
+    timeline.setPositionAt(currentIndex, pos.x, pos.y, Number(e.target.value));
     onTimelineChange();
   }
 

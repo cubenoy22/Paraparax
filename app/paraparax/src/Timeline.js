@@ -8,7 +8,7 @@ export default class Timeline {
       let prevItem;
       if (positions) {
         const positionItems = positions.map(aData => {
-          const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y);
+          const item = new PositionItem(aData.index, frames, undefined, prevItem, aData.x, aData.y, aData.angle || 0);
           if (prevItem) {
             prevItem.nextItem = item;
           }
@@ -156,7 +156,7 @@ export default class Timeline {
   applyPositionsToFrames() {
     let item = this.firstPosition;
     while (item) {
-      this.setPositionAt(item.index, item.x, item.y);
+      this.setPositionAt(item.index, item.x, item.y, item.angle);
       item = item.nextItem;
     }
   }
@@ -173,39 +173,53 @@ export default class Timeline {
     );
   }
 
-  setPositionAt(index, x, y) {
+  setPositionAt(index, x, y, angle) {
     const pos = this.getPositionFor(index);
     pos.x = x;
     pos.y = y;
+    if (typeof angle === 'number') {
+      pos.angle = angle;
+    }
 
     if (pos.prevItem) {
-      const startX = pos.prevItem.x;
-      const startY = pos.prevItem.y;
+      const { x: startX, y: startY, angle: startA } = pos.prevItem;
       const { startIndex } = pos;
       const diffX = (x - startX) / (index - startIndex);
       const diffY = (y - startY) / (index - startIndex);
+      const diffA = (angle - startA) / (index - startIndex);
       for (let i = startIndex; i <= index; ++i) {
         this.frames[i].posX = startX + diffX * (i - startIndex);
         this.frames[i].posY = startY + diffY * (i - startIndex);
+        if (typeof angle === 'number') {
+          this.frames[i].angle = startA + diffA * (i - startIndex);
+        }
       }
     } else {
       this.frames[0].posX = x;
       this.frames[0].posY = y;
+      if (typeof angle === 'number') {
+        this.frames[0].angle = angle;
+      }
     }
     if (pos.nextItem) {
-      const endIndex = pos.nextItem.index;
-      const endX = pos.nextItem.x;
-      const endY = pos.nextItem.y;
+      const { index: endIndex, x: endX, y: endY, angle: endA } = pos.nextItem;
       const diffX = (endX - pos.x) / (endIndex - index);
       const diffY = (endY - pos.y) / (endIndex - index);
+      const diffA = (endA - pos.angle) / (endIndex - index);
       for (let i = index; i <= endIndex; ++i) {
         this.frames[i].posX = pos.x + diffX * (i - index);
         this.frames[i].posY = pos.y + diffY * (i - index);
+        if (typeof angle === 'number') {
+          this.frames[i].angle = pos.angle + diffA * (i - index);
+        }
       }
     } else {
       for (let i = index; i <= pos.endIndex; ++i) {
         this.frames[i].posX = pos.x;
         this.frames[i].posY = pos.y;
+        if (typeof angle === 'number') {
+          this.frames[i].angle = pos.angle;
+        }
       }
     }
   }
@@ -337,10 +351,11 @@ class TimelineItem {
 }
 
 class PositionItem extends TimelineItem {
-  constructor(index, frames, nextItem, prevItem, x = 0, y = 0) {
+  constructor(index, frames, nextItem, prevItem, x = 0, y = 0, angle = 0) {
     super(index, frames, nextItem, prevItem);
     this.x = x;
     this.y = y;
+    this.angle = angle;
   }
 
   reset() {
@@ -348,11 +363,12 @@ class PositionItem extends TimelineItem {
   }
 
   toJSON() {
-    const { index, x, y } = this;
+    const { index, x, y, angle } = this;
     return {
       index,
       x,
-      y
+      y,
+      angle
     };
   }
 }

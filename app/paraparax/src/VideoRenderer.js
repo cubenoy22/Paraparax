@@ -65,13 +65,16 @@ export default class VideoRenderer extends React.Component {
     ctx.save();
 
     const { canvasW, canvasH } = this.state;
-    ctx.clearRect(0, 0, canvasW, canvasH);
     ctx.filter = frame.filterText;
     if (clipToBounds) {
+      ctx.clearRect(0, 0, canvasW, canvasH);
       ctx.beginPath();
       ctx.rect(ra.x, ra.y, ra.w || canvasW, ra.h || canvasH);
       ctx.clip();
     }
+    ctx.translate(canvasW / 2, canvasH / 2);
+    ctx.rotate(frame.angle * Math.PI / 180);
+    ctx.translate(-canvasW / 2, -canvasH / 2);
     ctx.drawImage(this.bitmaps[currentIndex], frame.posX, frame.posY);
     ctx.restore();
   }
