@@ -25,7 +25,8 @@ export default class ValueEditor extends React.Component {
         display: 'flex',
         flexDirection: 'column',
         width: '300px',
-        overflowY: 'scroll'
+        overflowY: 'scroll',
+        fontSize: '9pt'
       }}>
         <div>
           <h3>Player</h3>
