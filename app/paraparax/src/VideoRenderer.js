@@ -7,8 +7,6 @@ export default class VideoRenderer extends React.Component {
     this.state = {
       canvasW: 0,
       canvasH: 0,
-      cursorX: 0,
-      cursorY: 0,
     };
     this.bitmaps = [];
     this.frames = [];
@@ -31,21 +29,13 @@ export default class VideoRenderer extends React.Component {
     return null;
   }
 
-  onMouseMove(e) {
-    const r = e.target.getBoundingClientRect();
-    this.setState({
-      cursorX: Math.floor(e.clientX - r.left),
-      cursorY: Math.floor(e.clientY - r.top)
-    });
-  }
-
   async load(frames) {
     this.frames = frames;
     if (frames.length < 1) {
       this.bitmaps = [];
       this.setState({
         canvasW: 0,
-        canvasH: 0
+        canvasH: 0,
       });
       return;
     }
@@ -53,7 +43,7 @@ export default class VideoRenderer extends React.Component {
     this.bitmaps = await Promise.all(frames.map(frame => createImageBitmap(frame.file)));
     this.setState({
       canvasW: this.bitmaps[0].width,
-      canvasH: this.bitmaps[0].height
+      canvasH: this.bitmaps[0].height,
     });
     this.drawFrame();
   }
@@ -62,6 +52,7 @@ export default class VideoRenderer extends React.Component {
     const ctx = this.graphicsCtx;
     const { currentIndex, renderingArea: ra, clipToBounds } = this.props;
     const frame = this.frames[currentIndex];
+    if (!frame) return;
     ctx.save();
 
     const { canvasW, canvasH } = this.state;
@@ -89,27 +80,17 @@ export default class VideoRenderer extends React.Component {
 
   render() {
     return (
-      <div style={{position: 'relative'}}>
-        <canvas
-          ref={this.canvasRef}
-          width={this.state.canvasW}
-          height={this.state.canvasH}
-          onMouseMove={this.onMouseMove.bind(this)}
-          onClick={ this.props.togglePlaying }
-          style={{
-            border: '1px solid red'
-          }}
-        />
-        <div style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          top: '0',
-          pointerEvents: 'none'
-        }}>
-          <p>{`${this.state.cursorX}, ${this.state.cursorY}`}</p>
-        </div>
-      </div>
+      <canvas
+        ref={this.canvasRef}
+        width={ this.state.canvasW }
+        height={ this.state.canvasH }
+        onClick={ this.props.togglePlaying }
+        style={{
+          border: '1px solid red',
+          width: `${this.state.canvasW * this.getScale()}px`,
+          height: `${this.state.canvasH * this.getScale()}px`,
+        }}
+      />
     );
   }
 }
