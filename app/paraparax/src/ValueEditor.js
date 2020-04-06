@@ -18,7 +18,9 @@ export default class ValueEditor extends React.Component {
       onReverseChange,
       onClipToBoundsChange,
       renderingArea: ra,
-      clipToBounds
+      clipToBounds,
+      isHighRes,
+      onIsHighResChange
     } = this.props;
     return (
       <div style={{
@@ -61,11 +63,18 @@ export default class ValueEditor extends React.Component {
           H: <input type='text' ref={ this.raH } value={ ra.h } onChange={this.onRenderingAreaChange.bind(this)}></input><br />
           <label>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={ clipToBounds }
               onChange={ (e) => { onClipToBoundsChange(e.target.checked); } }
             />Clip to Bounds
-          </label>
+          </label><br />
+          <label>
+            <input
+              type='checkbox'
+              checked={ isHighRes }
+              onChange={ e => { onIsHighResChange(e.target.checked); } }
+            />High Res
+          </label><br />
           <h3>Frames</h3>
           <h4>Playing</h4>
           delay: <input type='text' value={ this.getFrameDelay() } onChange={ this.onDelayChange.bind(this) }></input>

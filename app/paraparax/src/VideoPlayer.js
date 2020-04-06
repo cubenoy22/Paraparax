@@ -32,7 +32,8 @@ export default class VideoPlayer extends React.Component {
         w: 0,
         h: 0
       },
-      clipToBounds: false
+      clipToBounds: false,
+      isHighRes: false,
     };
     this.rendererRef = React.createRef();
     this.saveLinkRef = React.createRef();
@@ -52,7 +53,8 @@ export default class VideoPlayer extends React.Component {
       loop,
       loopBackAndForth,
       renderingArea,
-      clipToBounds
+      clipToBounds,
+      isHighRes
     } = this.state;
     return (
       <>
@@ -147,6 +149,7 @@ export default class VideoPlayer extends React.Component {
                   lastModified={ lastModified }
                   renderingArea={ renderingArea }
                   clipToBounds={ clipToBounds }
+                  isHighRes={ isHighRes }
                 />
               </div>
             </div>
@@ -178,11 +181,13 @@ export default class VideoPlayer extends React.Component {
             currentIndex={ currentIndex }
             renderingArea={ renderingArea }
             clipToBounds={ clipToBounds }
+            isHighRes={ isHighRes }
             onTimelineChange={ this.onTimelineChange.bind(this)}
             onLoopChange={ this.onLoopChange.bind(this) }
             onReverseChange={ this.onReverseChange.bind(this) }
             onRenderingAreaChange={ this.onRenderingAreaChange.bind(this) }
             onClipToBoundsChange={ this.onClipToBoundsChange.bind(this) }
+            onIsHighResChange={ this.onIsHighResChange.bind(this) }
           />
         </div>
       </>
@@ -257,7 +262,16 @@ export default class VideoPlayer extends React.Component {
     if (configFile) {
       const reader = new FileReader();
       reader.onload = e => {
-        const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse, renderingArea } = JSON.parse(e.target.result);
+        const {
+          timeline,
+          startFrameIndex,
+          endFrameIndex,
+          loop,
+          loopBackAndForth,
+          reverse,
+          renderingArea,
+          isHighRes
+        } = JSON.parse(e.target.result);
         this.setState({
           frames: frames,
           timeline: new Timeline(frames, timeline),
@@ -266,7 +280,8 @@ export default class VideoPlayer extends React.Component {
           loop,
           loopBackAndForth,
           reverse,
-          renderingArea: renderingArea || { x: 0, y: 0, w: 0, h: 0 }
+          renderingArea: renderingArea || { x: 0, y: 0, w: 0, h: 0 },
+          isHighRes,
         });
       };
       reader.readAsText(configFile);
@@ -278,7 +293,8 @@ export default class VideoPlayer extends React.Component {
         endFrameIndex: imageFiles.length,
         loop: true,
         loopBackAndForth: false,
-        reverse: false
+        reverse: false,
+        isHighRes: false
       });
     }
   }
@@ -368,7 +384,16 @@ export default class VideoPlayer extends React.Component {
   }
 
   onSave() {
-    const { timeline, startFrameIndex, endFrameIndex, loop, loopBackAndForth, reverse, renderingArea } = this.state;
+    const {
+      timeline,
+      startFrameIndex,
+      endFrameIndex,
+      loop,
+      loopBackAndForth,
+      reverse,
+      renderingArea,
+      isHighRes
+    } = this.state;
     const json = JSON.stringify({
       timeline: timeline.toJSON(),
       startFrameIndex,
@@ -376,7 +401,8 @@ export default class VideoPlayer extends React.Component {
       loop,
       loopBackAndForth,
       reverse,
-      renderingArea
+      renderingArea,
+      isHighRes
     });
     (() => {
       const link = this.saveLinkRef.current;
@@ -448,6 +474,13 @@ export default class VideoPlayer extends React.Component {
   onClipToBoundsChange(clipToBounds) {
     this.setState({
       clipToBounds,
+      lastModified: new Date()
+    });
+  }
+
+  onIsHighResChange(isHighRes) {
+    this.setState({
+      isHighRes,
       lastModified: new Date()
     });
   }

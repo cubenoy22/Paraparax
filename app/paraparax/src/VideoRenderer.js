@@ -83,6 +83,10 @@ export default class VideoRenderer extends React.Component {
     return this.canvasRef.current.captureStream();
   }
 
+  getScale() {
+    return this.props.isHighRes ? 0.5 : 1;
+  }
+
   render() {
     return (
       <div style={{position: 'relative'}}>
